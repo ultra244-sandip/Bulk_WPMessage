@@ -8,13 +8,10 @@ app = Flask(__name__, static_folder="static")
 def normalize_phone(raw, default_cc="91"):
     s = str(raw).strip()
     digits = re.sub(r"\D+", "", s)
-    # 10-digit local → prepend cc
     if re.fullmatch(r"[6-9]\d{9}", digits):
         return default_cc + digits
-    # already cc + local
     if re.fullmatch(default_cc + r"[6-9]\d{9}", digits):
         return digits
-    # invalid
     return None
 
 @app.route("/", methods=["GET", "POST"])
@@ -23,16 +20,27 @@ def index():
     error = None
 
     if request.method == "POST":
-        template = request.form.get("template", "")
-        file      = request.files.get("csvfile")
+        template = request.form.get("template", "").strip()
+        file      = request.files.get("datafile")
 
-        if not file or template.strip()=="":
-            error = "Please upload a CSV and enter a message template."
+        if not file or not template:
+            error = "Please upload a file and enter a message."
         else:
-            df = pd.read_csv(file, dtype=str)
+            filename = file.filename.lower()
+            try:
+                if filename.endswith((".xls", ".xlsx")):
+                    df = pd.read_excel(file, dtype=str)
+                elif filename.endswith(".csv"):
+                    df = pd.read_csv(file, dtype=str)
+                else:
+                    raise ValueError("Unsupported filetype")
+            except Exception as e:
+                error = f"Could not read file: {e}"
+                return render_template("index.html", error=error)
+
             for _, row in df.iterrows():
-                name = row.get("Name","").strip()
-                raw  = row.get("Phone","").strip()
+                name = row.get("Name", "").strip()
+                raw  = row.get("Phone", "").strip()
                 phone = normalize_phone(raw)
 
                 if phone:
@@ -45,5 +53,4 @@ def index():
     return render_template("index.html", links=links, error=error)
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(debug=True, host="0.0.0.0", port=port)
+    app.run(debug=True, host="0.0.0.0", port=5000)

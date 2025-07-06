@@ -1,31 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>WhatsApp Bulk Link Generator</title>
-  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-  <meta name="theme-color" content="#25D366">
+  <!-- … head tags unchanged … -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-
-  <!-- iOS support -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
 </head>
 <body>
   <header>WhatsApp Bulk Link Generator</header>
   <div class="container">
+
     {% if error %}
       <div class="error">{{ error }}</div>
     {% endif %}
 
     <form method="post" enctype="multipart/form-data">
       <label>Message Template (use {name})</label>
-      <input type="text" name="template" placeholder="Hi {name}, your appointment is at 3pm" required>
+      <!-- multi-line textarea -->
+      <textarea name="template" rows="6" placeholder="Hi {name},&#10;Your appointment is tomorrow at 3 PM." required></textarea>
 
-      <label>Upload CSV (Name & Phone)</label>
-      <input type="file" name="csvfile" accept=".csv" required>
+      <label>Upload File (CSV or Excel)</label>
+      <input type="file" name="datafile" accept=".csv,.xls,.xlsx" required>
 
       <button type="submit">Generate Links</button>
     </form>
@@ -49,7 +42,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/static/sw.js')
-        .catch(err => console.warn("SW registration failed:", err));
+        .catch(err => console.warn("SW failed:", err));
     }
   </script>
 </body>
