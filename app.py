@@ -22,23 +22,20 @@ def index():
     if request.method == "POST":
         template = request.form.get("template", "").strip()
         file      = request.files.get("datafile")
+        filename  = file.filename.lower()
 
-        if not file or not template:
-            error = "Please upload a file and enter a message."
-        else:
-            filename = file.filename.lower()
-            try:
-                if filename.endswith((".xls", ".xlsx")):
-                    df = pd.read_excel(file, dtype=str)
-                elif filename.endswith(".csv"):
-                    df = pd.read_csv(file, dtype=str)
-                else:
-                    raise ValueError("Unsupported filetype")
-            except Exception as e:
-                error = f"Could not read file: {e}"
-                return render_template("index.html", error=error)
-
-            for _, row in df.iterrows():
+        try:
+            if filename.endswith((".xls", ".xlsx")):
+                engine = "openpyxl" if filename.endswith("xlsx") else "xlrd"
+                df = pd.read_excel(file, dtype=str, engine=engine)
+            elif filename.endswith(".csv"):
+                df = pd.read_csv(file, dtype=str)
+            else:
+                raise ValueError("Unsupported filetype")
+        except Exception as e:
+            error = f"Could not read file: {e}"
+            return render_template("index.html", error=error)
+        for _, row in df.iterrows():
                 name = row.get("Name", "").strip()
                 raw  = row.get("Phone", "").strip()
                 phone = normalize_phone(raw)
